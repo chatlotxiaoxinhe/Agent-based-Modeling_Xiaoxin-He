@@ -1,0 +1,5 @@
+mesa>=3.0
+solara
+matplotlib
+numpy
+altair

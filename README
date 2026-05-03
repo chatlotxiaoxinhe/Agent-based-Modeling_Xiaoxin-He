@@ -1,0 +1,79 @@
+# Axelrod's Cultural Dissemination Model — Mesa Implementation
+
+A Mesa 3.x implementation of Robert Axelrod's (1997) agent-based model of
+cultural dissemination, with an interactive Solara GUI.
+
+> Axelrod, R. (1997). The Dissemination of Culture: A Model with Local
+> Convergence and Global Polarization. *Journal of Conflict Resolution*,
+> 41(2), 203–226.
+
+## What the model does
+
+Each cell on a grid is a fixed "site" with a culture represented as a
+length-`F` vector of trait indices in `{0, ..., q-1}`. At each event:
+
+1. A random site is chosen as the **active site**, and one of its neighbors
+   is chosen at random.
+2. With probability equal to their **cultural similarity** (the proportion
+   of features on which they agree), they interact. Interaction = the
+   active site copies the neighbor's trait on one randomly chosen
+   *differing* feature.
+
+The model is run until **frozen**: no two adjacent sites have similarity
+strictly between 0 and 1. Axelrod's striking finding is that even though
+every interaction makes neighbors *more* similar, the system commonly
+freezes with multiple distinct stable cultural regions.
+
+## Files
+
+| File | Contents |
+| `agents.py` | `CulturalAgent` — culture vector, similarity, single-event `interact()` |
+| `model.py`  | `AxelrodModel` — grid, asynchronous activation, freeze check, region/zone counters |
+| `app.py`    | Solara visualization: grid view + 2 plots + parameter sliders |
+
+## Running it
+
+```bash
+pip install -r requirements.txt
+solara run app.py
+```
+
+Then open the URL Solara prints (usually `http://localhost:8765`).
+
+## Parameters exposed in the GUI
+
+All parameters that Axelrod varies in the paper:
+
+- **F** (number of cultural features) — Table 2: 5, 10, 15
+- **q** (traits per feature) — Table 2: 5, 10, 15
+- **Neighborhood size** — 4 (von Neumann), 8 (Moore), 12 (diamond, p. 213)
+- **Width / Height** — Figure 2 sweeps from 2×2 to 100×100
+- **Torus** — boundary condition (p. 215)
+
+Plus one visualization-only knob:
+
+- **Events per step** — how many one-event activations happen between
+  display refreshes. Does *not* affect dynamics; the paper requires
+  strict asynchronous activation regardless of this number.
+
+## Outcomes plotted
+
+- **Cultural Regions** — connected components of same-culture sites.
+- **Cultural Zones** — connected components where each adjacent pair shares
+  ≥1 feature (Axelrod p. 217, fn 9). Shown alongside regions to replicate
+  Figure 3's qualitative finding that zones converge fast while regions
+  converge slowly.
+- **Largest Region (%)** — quick monoculture indicator.
+
+## Validation
+
+Replicates Axelrod's Table 2:
+
+| F  | q  | Paper mean | Our mean (10 seeds) |
+|----|----|-----------:|--------------------:|
+| 5  | 10 | 3.2        | 4.5 (range 1–18)    |
+| 5  | 15 | 20.0       | 19.9                |
+
+Both fall within the variance Axelrod himself reports ("In 14% of the runs
+there was only one stable region, whereas in 10% of the runs there were
+more than six.").
